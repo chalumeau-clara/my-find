@@ -1,0 +1,216 @@
+#####################
+echo -n "Simple delete ast_evaluation/foo/bah -delete : "
+#####################
+mkdir ast_evaluation/foo/bah
+touch ast_evaluation/foo/bah/bar ast_evaluation/foo/bah/baz
+find ast_evaluation/foo/bah -delete \( ! -regex ".*/\..*" -name "[!.]*" -o -name "." \)  | tr ' ' '\n' > expected
+
+mkdir ast_evaluation/foo/bah
+touch ast_evaluation/foo/bah/bar ast_evaluation/foo/baz
+./myfind ast_evaluation/foo/bah -delete| tr ' ' '\n' > actual
+diff -u expected actual
+if [ $? -eq 0 ]; then
+    echo -e "Test passed"
+fi
+
+valgrind --leak-check=yes --error-exitcode=2 ./myfind ast_evaluation/foo/bah -delete > error 2>&1
+if [ $? -eq 2 ]; then
+    cat error
+fi
+
+
+/*
+            // Get real path
+            char buf[PATH_MAX] = { 0 };
+            char tmp_buf[PATH_MAX];
+            char name[_POSIX_PATH_MAX] = { 0 };
+            char *path = NULL;
+            errno = 0;
+            strcat(name, start);
+            strcat(name, "/");
+            strcat(name, entry->d_name);
+            path = realpath(name, tmp_buf);
+            if (!path || errno)
+            {
+                perror("realpath");
+                exit(EXIT_FAILURE);
+            }
+
+            // replace name symbolic link
+            //printf("old %s, new %s, strreplace %s\n", oldW, newW, tmp_buf);
+            replaceWord(tmp_buf, oldW, newW, buf);
+            //printf("save %s\n", buf);
+            // Get path begin with begin
+            char *save_ptr = NULL;
+            char *token = strtok_r(buf, "/", &save_ptr);
+            for (; token != NULL && strstr(token, begin) == NULL;
+                 token = strtok_r(NULL, "/", &save_ptr))
+            {
+                // printf("save ptr: %s\n", save_ptr);
+            }
+            // printf("myfind save : %s\n", save_ptr);
+            // Print it
+            if (length == 0)
+            {
+                printf("%s", filename);
+            }
+            else
+            {
+                static struct my_expr *expr;
+
+                expr = parse_expr(argv, length);
+                if (eval_expr(expr, save_ptr))
+                    printf("%s%s\n", root == 1 ? "./" : "", save_ptr);
+                // printf("expr %d %s\n", expr->type, expr->data.value);
+                // printf("\n");
+                free_expr(expr);
+                // free(expr);
+            }
+
+            // If directory go in it
+            if (isDirectory(name) == 1)
+            {
+                ls_l(name, begin, argv, length, root, oldW, newW);
+            }*/
+
+/*int myfind_l(unsigned args_length, char **argv)
+{
+    unsigned expr = find_expr(argv, args_length);
+
+    // if no path is given
+    if (expr == 0)
+    {
+        // Get current dir
+        char *save_ptr = NULL;
+        char *current_dir = get_current_dir_name();
+        if (args_length - expr == 0)
+            printf(".\n");
+        else
+        {
+            static struct my_expr *expr1;
+            expr1 = parse_expr(argv, args_length);
+            if (eval_expr(expr1, "."))
+                printf(".\n");
+            free_expr(expr1);
+            // free(expr1);
+        }
+        char *token = strtok_r(current_dir, "/", &save_ptr);
+        for (; token != NULL && strstr(save_ptr, "/") != NULL;
+             token = strtok_r(NULL, "/", &save_ptr))
+            ;
+
+        // Make a ls recursive
+        ls_l(".", save_ptr, argv, args_length, 1, "", "");
+        free(current_dir);
+    }
+
+    else
+    {
+        // For each argument do a recursive ls
+        unsigned i = 0;
+        while (args_length != i && argv[i][0] != '-' && argv[i][0] != '!'
+               && argv[i][0] != '(')
+        {
+            // Save argv in other pointer
+            char save[4096] = { 0 };
+            strcpy(save, argv[i]);
+            // Get last dir
+            char *save_ptr = NULL;
+            char *current_dir = get_current_dir_name();
+            char *token = strtok_r(current_dir, "/", &save_ptr);
+            for (; token != NULL && strstr(save_ptr, "/") != NULL;
+                 token = strtok_r(NULL, "/", &save_ptr));
+            // Perform ls
+            if (args_length - expr == 0)
+                printf("%s\n", argv[i]);
+            else
+            {
+                static struct my_expr *expr1;
+                expr1 = parse_expr(argv + expr, args_length - expr);
+
+                if (eval_expr(expr1, argv[i]))
+                    printf("%s\n", argv[i]);
+                free_expr(expr1);
+                // free(expr1);
+            }
+            int root =
+                strcmp(argv[i], ".") == 0 || strcmp(argv[i], "./") == 0 ? 1 : 0;
+            char *tmp = my_malloc(strlen(argv[i]) * sizeof (int));
+            //printf("strlen %lu, %c\n", strlen(argv[i]), argv[i][strlen(argv[i]) - 1]);
+            tmp = strncpy(tmp, argv[i], strlen(argv[i]));
+            if (argv[i][strlen(argv[i]) - 1] == '/')
+                tmp[strlen(argv[i]) - 1] = '\0';
+            else
+                tmp[strlen(argv[i])] = '\0';
+            //printf("strlen %lu, %c\n", strlen(argv[i]), argv[i][strlen(argv[i]) - 1]);
+
+
+            //printf("is link %i, true %i, tmp %s\n", isLink(tmp), true, tmp);
+            if (isLink(tmp) == true)
+            {
+                // Get real path
+                char buf[PATH_MAX];
+                char name[_POSIX_PATH_MAX] = { 0 };
+                char *path = NULL;
+                errno = 0;
+
+                strcat(name, argv[i]);
+                if (argv[i][strlen(argv[i] - 1) != '/'])
+                    strcat(name, "/");
+                path = realpath(name, buf);
+                //printf("buf %s\n", buf);
+                if (!path || errno)
+                {
+                    perror("realpath");
+                    exit(EXIT_FAILURE);
+                }
+
+                char *save = NULL;
+                char *token = strtok_r(buf, "/", &save);
+                for (; token != NULL && strstr(save, "/") != NULL;
+                     token = strtok_r(NULL, "/", &save));
+                //printf("save %s\n", save);
+
+                if (strstr(tmp, "/") != NULL)
+                {
+                    char *save_new = NULL;
+                    char *token1 = strtok_r(tmp, "/", &save_new);
+                    for (; token1 != NULL && strstr(save, "/") != NULL;
+                         token = strtok_r(NULL, "/", &save_new))
+                        ;
+                    //printf("save new %s\n", save_new);
+                    ls_l(argv[i], save_ptr, argv + expr, args_length - expr,
+                         root, save, save_new);
+                }
+                else
+                    ls_l(argv[i], save_ptr, argv + expr, args_length - expr,
+                         root, save, tmp);
+            }
+            else
+                ls_l(argv[i], save_ptr, argv + expr, args_length - expr, root, "", "");
+            free(current_dir);
+            free(tmp);
+            i++;
+        }
+    }
+    return 0;
+}*/
+
+// Verify error
+    /*if (dir == NULL)
+    {
+        switch (errno)
+        {
+        case EACCES:
+            warn("myfind: Permission denied\n");
+            return false;
+        case ENOENT:
+            warn("myfind: Directory does not exist %s\n", start);
+            return false;
+        case ENOTDIR:
+            warn("myfind: '%s' is not a directory\n", start);
+            return false;
+        }
+    }*/
+    if (entry->d_type == DT_UNKNOWN)
+            warn("myfind: '%s' cannot read type\n", start);

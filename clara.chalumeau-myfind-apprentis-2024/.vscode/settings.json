@@ -1,0 +1,11 @@
+{
+    "files.associations": {
+        "simple_stat.C": "cpp",
+        "myfind.h": "c",
+        "ast_evaluation.h": "c",
+        "expression.h": "c",
+        "stdio.h": "c",
+        "stdlib.h": "c",
+        "parser.h": "c"
+    }
+}
